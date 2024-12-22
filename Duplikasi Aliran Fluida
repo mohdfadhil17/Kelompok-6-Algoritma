@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Aliran Fluida</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #00d4c9;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        main {
+            margin: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        canvas {
+            border: 1px solid #00d4bf;
+            margin-top: 20px;
+        }
+        .button {
+            margin-top: 10px;
+            background-color: #92262b;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #b59d00;
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+        }
+        #history {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        #history h3 {
+            margin-top: 0;
+        }
+        #history ul {
+            list-style: none;
+            padding: 0;
+        }
+        #history li {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Duplikasi Aliran Fluida</h1>
+        <p>Menggambarkan aliran fluida dalam pipa</p>
+    </header>
+    <main>
+        <form id="simulation-form">
+            <div class="form-group">
+                <label for="velocity">Kecepatan Fluida (m/s):</label>
+                <input type="number" id="velocity" step="0.1" value="1.0" required>
+            </div>
+            <div class="form-group">
+                <label for="viscosity">Viskositas Fluida (Pa.s):</label>
+                <input type="number" id="viscosity" step="0.001" value="0.001" required>
+            </div>
+            <div class="form-group">
+                <label for="diameter">Diameter Pipa (m):</label>
+                <input type="number" id="diameter" step="0.01" value="0.1" required>
+            </div>
+            <button type="button" class="button" onclick="simulateFlow()">Simulasikan Aliran</button>
+        </form>
+        <canvas id="flowCanvas" width="800" height="400"></canvas>
+        <div class="explanation" id="explanation" style="display: none;"></div>
+        <div id="history">
+            <h3>Riwayat Simulasi</h3>
+            <ul id="history-list"></ul>
+        </div>
+    </main>
+    <script>
+        const historyList = document.getElementById('history-list');
+
+        function simulateFlow() {
+            const velocity = parseFloat(document.getElementById('velocity').value);
+            const viscosity = parseFloat(document.getElementById('viscosity').value);
+            const diameter = parseFloat(document.getElementById('diameter').value);
+
+            if (isNaN(velocity) || isNaN(viscosity) || isNaN(diameter)) {
+                alert('Harap masukkan nilai yang valid!');
+                return;
+            }
+
+            const reynoldsNumber = (velocity * diameter) / viscosity;
+            const canvas = document.getElementById('flowCanvas');
+            const context = canvas.getContext('2d');
+
+            // Clear the canvas
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw flow representation
+            context.fillStyle = '#0078d4';
+            const centerY = canvas.height / 2;
+            const flowHeight = Math.min(canvas.height, Math.max(20, reynoldsNumber / 10));
+
+            for (let i = 0; i < canvas.width; i += 20) {
+                const waveHeight = flowHeight * Math.sin((i / canvas.width) * 2 * Math.PI);
+                context.fillRect(i, centerY - waveHeight / 2, 10, waveHeight);
+            }
+
+            // Display Reynolds Number
+            context.fillStyle = '#000';
+            context.font = '16px Arial';
+            context.fillText(Reynolds Number: ${reynoldsNumber.toFixed(2)}, 20, 30);
+
+            // Display flow type
+            const flowType = reynoldsNumber < 2000 ? 'Laminar Flow' : reynoldsNumber < 4000 ? 'Transitional Flow' : 'Turbulent Flow';
+            context.fillText(Flow Type: ${flowType}, 20, 50);
+
+            // Show explanation
+            const explanationDiv = document.getElementById('explanation');
+            explanationDiv.style.display = 'block';
+            explanationDiv.innerHTML = `
+                <h3>Penjelasan Hasil:</h3>
+                <p>Bilangan Reynolds dihitung menggunakan formula: <strong>Re = (Kecepatan x Diameter) / Viskositas</strong>.</p>
+                <p>Hasil Bilangan Reynolds Anda adalah <strong>${reynoldsNumber.toFixed(2)}</strong>, yang menunjukkan bahwa jenis aliran adalah <strong>${flowType}</strong>.</p>
+                <p>Penjelasan Tipe Aliran:</p>
+                <ul>
+                    <li><strong>Laminar Flow</strong>: Terjadi ketika Re < 2000, di mana aliran bergerak dengan pola yang teratur.</li>
+                    <li><strong>Transitional Flow</strong>: Terjadi ketika 2000 ≤ Re < 4000, di mana aliran mulai tidak stabil.</li>
+                    <li><strong>Turbulent Flow</strong>: Terjadi ketika Re ≥ 4000, di mana aliran menjadi kacau dan tidak teratur.</li>
+                </ul>
+            `;
+
+            // Save to history
+            const historyItem = document.createElement('li');
+            historyItem.textContent = Kecepatan: ${velocity} m/s, Viskositas: ${viscosity} Pa.s, Diameter: ${diameter} m, Reynolds Number: ${reynoldsNumber.toFixed(2)}, Tipe Aliran: ${flowType};
+            historyList.appendChild(historyItem);
+        }
+    </script>
+</body>
+</html>
